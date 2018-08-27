@@ -16,7 +16,7 @@ class ReTokenizer(object):
                  u"Tagbanwa",u"TaiLe",u"Tamil",u"Telugu",u"Thaana",u"Thai",u"Tibetan",u"Yi",u"N"]
     WORD = u'(?P<WORD>' + u'|'.join(u'[\p{{{0}}}][\p{{{0}}}\p{{M}}■]*'.format(lang) for lang in LANGUAGES) + u')'
     PLACEHOLDER = ur'(?P<PLACEHOLDER>＠＠[A-Za-z0-9]*)'
-    SPACE = ur'(?P<SPACE>[\p{Z}]+)'
+    SPACE = ur'(?P<SPACE>[\p{Z}])'
     REST = ur'(?P<REST>[^\p{Z}\p{L}\p{M}\p{N}＠]+|(?<!＠)＠(?!＠))'
     TOKENIZER_RE = regex.compile(ur'(?V1p)' + u'|'.join((WORD, PLACEHOLDER, SPACE, REST)))
     JOINER_RE = regex.compile(ur'(?V1p)' + JOINER_SYMBOL)
@@ -27,8 +27,8 @@ class ReTokenizer(object):
     def tokenize_with_types(cls, sentence):
         tokens = []
         token_types = []
-        privous_token_type = u'REST'
-        before_privous_token_type = u'REST'
+        privous_token_type = u'SPACE'
+        space_added = True
         for w_it in cls.TOKENIZER_RE.finditer(sentence):
             word = sentence[w_it.start():w_it.end()]
             token_type = next(k for k, v in w_it.groupdict().iteritems() if v is not None)
@@ -38,15 +38,20 @@ class ReTokenizer(object):
                     token_types.append(u'REST')
                 tokens.append(word)
                 token_types.append(token_type)
+                space_added = False
             elif token_type  == u'REST':
-                if privous_token_type == u'SPACE' and before_privous_token_type != u'REST':
+                if privous_token_type == u'SPACE' and not space_added:
                     word = u''.join((cls.SPACE_SYMBOL, word))
                 tokens.append(word)
                 token_types.append(token_type)
+                space_added = False
             elif token_type == u'SPACE':
-                if privous_token_type == u'REST' and tokens:
+                if privous_token_type == u'REST':
                     tokens[-1] = u''.join((tokens[-1], cls.SPACE_SYMBOL))
-            before_privous_token_type = privous_token_type
+                    space_added = True
+                if privous_token_type == u'SPACE':
+                    tokens.append(cls.SPACE_SYMBOL)
+                    space_added = True
             privous_token_type = token_type
         return tokens, token_types
     
