@@ -28,6 +28,7 @@ class ReTokenizer(object):
         tokens = []
         token_types = []
         privous_token_type = u'REST'
+        before_privous_token_type = u'REST'
         for w_it in cls.TOKENIZER_RE.finditer(sentence):
             word = sentence[w_it.start():w_it.end()]
             token_type = next(k for k, v in w_it.groupdict().iteritems() if v is not None)
@@ -38,13 +39,14 @@ class ReTokenizer(object):
                 tokens.append(word)
                 token_types.append(token_type)
             elif token_type  == u'REST':
-                if privous_token_type == u'SPACE':
+                if privous_token_type == u'SPACE' and before_privous_token_type != u'REST':
                     word = u''.join((cls.SPACE_SYMBOL, word))
                 tokens.append(word)
                 token_types.append(token_type)
             elif token_type == u'SPACE':
                 if privous_token_type == u'REST' and tokens:
-                    tokens[-1] = u''.join((tokens[-1], cls.SPACE_SYMBOL)) 
+                    tokens[-1] = u''.join((tokens[-1], cls.SPACE_SYMBOL))
+            before_privous_token_type = privous_token_type
             privous_token_type = token_type
         return tokens, token_types
     
