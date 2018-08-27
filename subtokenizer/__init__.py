@@ -8,9 +8,60 @@ import codecs
 import argparse
 import itertools
 from collections import defaultdict
+from multiprocessing import Process, Pipe
+from threading import Thread
 from subtokenizer.subwords import Subwords, RESERVED_TOKENS
 from subtokenizer.tokenizer import ReTokenizer
 
+
+
+def multiprocess(func, in_generator, processes=1):
+    in_pipes = map(lambda x: Pipe(False), range(processes))
+    out_pipes = map(lambda x: Pipe(False), range(processes))
+
+    def writer():
+        pipe_cnt = 0
+        for obj in in_generator:
+            in_pipes[pipe_cnt][1].send(obj)
+            pipe_cnt += 1
+            if pipe_cnt >= processes:
+                pipe_cnt = 0
+        for conn_recv, conn_send in in_pipes:
+            conn_send.close()
+
+    def proc_func(func, proc_num):
+        for conn_recv, conn_send in in_pipes:
+            conn_send.close()
+        conn_recv = in_pipes[proc_num][0]
+        conn_send = out_pipes[proc_num][1]
+        while True:
+            try:
+                line = conn_recv.recv()
+            except EOFError:
+                break
+            conn_send.send(func(line))
+        conn_send.close()
+
+    procs = map(lambda x: Process(target=proc_func, args=(func, x)), range(processes))
+    for i in range(processes):
+        procs[i].start()
+        out_pipes[i][1].close()
+    write_proc = Thread(target=writer)
+    write_proc.start()
+
+    current_pipe = 0
+    live_pipes = [True] * processes
+    while True:
+        if not any(live_pipes):
+            break
+        if live_pipes[current_pipe]:
+            try:
+                yield out_pipes[current_pipe][0].recv()
+            except EOFError:
+                live_pipes[current_pipe] = False
+        current_pipe = current_pipe + 1
+        if current_pipe >= processes:
+            current_pipe = 0
 
 
 def learn(args):
@@ -20,10 +71,15 @@ def learn(args):
         reserved_tokens = list(token for token in reserved_tokens if token)
         reserved_tokens = RESERVED_TOKENS + reserved_tokens
     word_count = defaultdict(int)
-    for l in sys.stdin:
-        l = l.strip('\n')
-        for token in ReTokenizer.tokenize(l):
-            word_count[token] += 1
+    if args.processes == 1:
+        for l in sys.stdin:
+            l = ReTokenizer.tokenize(x.strip('\n'))
+            for token in l:
+                word_count[token] += 1
+    else:
+        for l in multiprocess(lambda x: ReTokenizer.tokenize(x.strip('\n')), sys.stdin, processes=args.processes):
+            for token in l:
+                word_count[token] += 1
     subdict = Subwords.build_to_target_size(args.size, word_count, 1, 1e3, reserved_tokens=reserved_tokens)
     subdict.store_to_file(args.output)
 
@@ -32,7 +88,8 @@ def tokenize(args):
     subdict = None
     if args.subwords:
         subdict = Subwords(args.subwords)
-    for l in sys.stdin:
+
+    def proc_func(l):
         l = l.strip('\n')
         tokens = ReTokenizer.tokenize(l)
         if subdict:
@@ -40,15 +97,24 @@ def tokenize(args):
                 tokens = itertools.chain.from_iterable(map(str, subdict.token_to_subtokens_ids(token)) for token in tokens)
             else:
                 tokens = itertools.chain.from_iterable(subdict.token_to_subtokens(token) for token in tokens)
-        sys.stdout.write(' '.join(tokens))
-        sys.stdout.write('\n')
+        return list(tokens)
+    if args.processes == 1:
+        for l in sys.stdin:
+            tokens = proc_func(l)
+            sys.stdout.write(' '.join(tokens))
+            sys.stdout.write('\n')
+    else:
+        for tokens in multiprocess(proc_func, sys.stdin, processes=args.processes):
+            sys.stdout.write(' '.join(tokens))
+            sys.stdout.write('\n')
 
 
 def detokenize(args):
     subdict = None
     if args.subwords:
         subdict = Subwords(args.subwords)
-    for l in sys.stdin:
+
+    def proc_func(l):
         l = l.strip('\n').split(' ')
         if subdict:
             if args.numeric:
@@ -57,8 +123,17 @@ def detokenize(args):
                 tokens = subdict.subtokens_to_tokens(l)
         else:
             tokens = l
-        sys.stdout.write(ReTokenizer.detokenize(tokens))
-        sys.stdout.write('\n')
+        return ReTokenizer.detokenize(tokens)
+
+    if args.processes == 1:
+        for l in sys.stdin:
+            line = proc_func(l)
+            sys.stdout.write(line)
+            sys.stdout.write('\n')
+    else:
+        for line in multiprocess(proc_func, sys.stdin, processes=args.processes):
+            sys.stdout.write(line)
+            sys.stdout.write('\n')
 
 
 def main():
@@ -77,12 +152,15 @@ def main():
     parser_learn.add_argument('-r', '--reserved',  type=str, help="file with reserved tokens")
     parser_learn.add_argument('-o', '--output', required=True,  type=str, help="subwords dictionary")
     parser_learn.add_argument('-s', '--size', default=30000,  type=int, help="number of subtokens")
+    parser_learn.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
     parser_tokenize = subparsers.add_parser('tokenize', help='a help')
     parser_tokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_tokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
-    parser_tokenize = subparsers.add_parser('detokenize', help='a help')
-    parser_tokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
-    parser_tokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
+    parser_tokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
+    parser_detokenize = subparsers.add_parser('detokenize', help='a help')
+    parser_detokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
+    parser_detokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
+    parser_detokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
     args = parser.parse_args()
     if args.mode == 'learn':
         learn(args)
@@ -92,7 +170,3 @@ def main():
         detokenize(args)
     else:
         print "unknown mode"
-    # print "hello"
-    # print args
-    # for l in sys.stdin:
-    #     print ReTokenizer.detokenize(ReTokenizer.tokenize(l.decode('utf8'))).encode('utf8')
