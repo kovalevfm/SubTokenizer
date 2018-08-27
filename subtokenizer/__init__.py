@@ -10,7 +10,7 @@ import itertools
 from collections import defaultdict
 from multiprocessing import Process, Pipe
 from threading import Thread
-from subtokenizer.subwords import Subwords, RESERVED_TOKENS
+from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS_ID, EOS
 from subtokenizer.tokenizer import ReTokenizer
 
 
@@ -97,7 +97,11 @@ def tokenize(args):
                 tokens = itertools.chain.from_iterable(map(str, subdict.token_to_subtokens_ids(token)) for token in tokens)
             else:
                 tokens = itertools.chain.from_iterable(subdict.token_to_subtokens(token) for token in tokens)
-        return list(tokens)
+        tokens = list(tokens)
+        if args.add_end:
+            tokens += [str(EOS_ID) if args.numeric else EOS]
+        return tokens
+
     if args.processes == 1:
         for l in sys.stdin:
             tokens = proc_func(l)
@@ -118,9 +122,9 @@ def detokenize(args):
         l = l.strip('\n').split(' ')
         if subdict:
             if args.numeric:
-                tokens = subdict.subtoken_ids_to_tokens(map(int, l))
+                tokens = subdict.subtoken_ids_to_tokens(int(t) for t in l if t != '0')
             else:
-                tokens = subdict.subtokens_to_tokens(l)
+                tokens = subdict.subtokens_to_tokens(t for t in l if t != EOS)
         else:
             tokens = l
         return ReTokenizer.detokenize(tokens)
@@ -156,7 +160,8 @@ def main():
     parser_tokenize = subparsers.add_parser('tokenize', help='a help')
     parser_tokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_tokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
-    parser_tokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
+    parser_tokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes") 
+    parser_tokenize.add_argument('-e', '--add_end', action='store_true', help="add end of line")
     parser_detokenize = subparsers.add_parser('detokenize', help='a help')
     parser_detokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_detokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
