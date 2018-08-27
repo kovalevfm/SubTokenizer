@@ -122,7 +122,7 @@ def detokenize(args):
         l = l.strip('\n').split(' ')
         if subdict:
             if args.numeric:
-                tokens = subdict.subtoken_ids_to_tokens(int(t) for t in l if t != '0')
+                tokens = subdict.subtoken_ids_to_tokens(int(t) for t in l if t != str(EOS_ID))
             else:
                 tokens = subdict.subtokens_to_tokens(t for t in l if t != EOS)
         else:
