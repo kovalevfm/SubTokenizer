@@ -73,7 +73,7 @@ def learn(args):
     word_count = defaultdict(int)
     if args.processes == 1:
         for l in sys.stdin:
-            l = ReTokenizer.tokenize(x.strip('\n'))
+            l = ReTokenizer.tokenize(l.strip('\n'))
             for token in l:
                 word_count[token] += 1
     else:
