@@ -174,4 +174,4 @@ def main():
     elif args.mode == 'detokenize':
         detokenize(args)
     else:
-        print "unknown mode"
+        print('unknown mode')
