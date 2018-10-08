@@ -39,7 +39,7 @@ def learn(args):
         for l in multiprocess(tokenize, sys.stdin, processes=args.processes):
             for token in l:
                 token_counts[token] += 1
-    subdict = SubTokenizer.learn(args.size, token_counts, 1, 1e3, reserved_tokens=reserved_tokens, min_symbol_count=args.min_symbol_count)
+    subdict = SubTokenizer.learn(token_counts, args.size, reserved_tokens=reserved_tokens, min_symbol_count=args.min_symbol_count)
     subdict.save(args.output)
 
 
