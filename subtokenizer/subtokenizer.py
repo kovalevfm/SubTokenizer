@@ -1,9 +1,9 @@
 # coding: utf-8
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 
 import io
 from HTMLParser import HTMLParser
-from subtokenizer.utils import encode_controls, encode_with_alphabet, alphabet_from_tokens, encode_tokens_with_alphabet, NOBREAK, ESCAPE_CHARS, normalize
+from subtokenizer.utils import encode_controls, encode_with_alphabet, alphabet_from_tokens, encode_tokens_with_alphabet, NOBREAK, ESCAPE_CHARS, normalize_text
 from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS
 from subtokenizer.tokenizer import ReTokenizer
 
@@ -23,7 +23,7 @@ class SubTokenizer(object):
         return self.HTML_PARSER.unescape(text)
 
     def tokenize(self, text, encode_controls=True, numeric=False, add_eos=False):
-        text = normalize(text)
+        text = normalize_text(text)
         if encode_controls:
             text = self.encode_controls(text)
         words = ReTokenizer.tokenize(text)

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from __future__ import unicode_literals, division
+from __future__ import unicode_literals, division, absolute_import
 
 import io
 import sys
@@ -8,7 +8,7 @@ import codecs
 import argparse
 from HTMLParser import HTMLParser
 from collections import defaultdict
-from subtokenizer.utils import wrap_text_reader, multiprocess, encode_controls, normalize, NOBREAK
+from subtokenizer.utils import wrap_text_reader, multiprocess, encode_controls, normalize_text, NOBREAK
 from subtokenizer.subwords import Subwords, EOS
 from subtokenizer.tokenizer import ReTokenizer
 from subtokenizer.subtokenizer import SubTokenizer
@@ -26,8 +26,8 @@ def learn(args):
     token_counts = defaultdict(int)
 
     def tokenize(line):
-        line = normalize(line.strip('\n'))
-        if not arags.no_encode_controls:
+        line = normalize_text(line.strip('\n'))
+        if not args.no_encode_controls:
             line = encode_controls(line)
         return ReTokenizer.tokenize(line)
 
@@ -49,11 +49,11 @@ def tokenize(args):
         subwords = Subwords(args.subwords)
 
     def proc_func(l):
-        l = normalize(l.strip('\n'))
+        l = normalize_text(l.strip('\n'))
         if subwords():
-            encode_controls = not arags.no_encode_controls
+            encode_controls = not args.no_encode_controls
             return subwords.tokenize(l, encode_controls=encode_controls, numeric=args.numeric, add_eos=args.add_eos)
-        if not arags.no_encode_controls:
+        if not args.no_encode_controls:
             line = encode_controls(line)
         tokens = ReTokenizer.tokenize(l)
         if args.add_eos:
@@ -102,7 +102,7 @@ def detokenize(HTML_PARSER, args):
 
 def encode(args):
     for line in sys.stdin:
-        line = encode_controls(normalize(line))
+        line = encode_controls(normalize_text(line))
         sys.stdout.write(line)
 
 
