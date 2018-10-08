@@ -6,100 +6,58 @@ import io
 import sys
 import codecs
 import argparse
-import itertools
+from HTMLParser import HTMLParser
 from collections import defaultdict
-from multiprocessing import Process, Pipe
-from threading import Thread
-from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS_ID, EOS
+from subtokenizer.utils import wrap_text_reader, multiprocess, encode_controls, normalize, NOBREAK
+from subtokenizer.subwords import Subwords, EOS
 from subtokenizer.tokenizer import ReTokenizer
+from subtokenizer.subtokenizer import SubTokenizer
 
-
-
-def multiprocess(func, in_generator, processes=1):
-    in_pipes = map(lambda x: Pipe(False), range(processes))
-    out_pipes = map(lambda x: Pipe(False), range(processes))
-
-    def writer():
-        pipe_cnt = 0
-        for obj in in_generator:
-            in_pipes[pipe_cnt][1].send(obj)
-            pipe_cnt += 1
-            if pipe_cnt >= processes:
-                pipe_cnt = 0
-        for conn_recv, conn_send in in_pipes:
-            conn_send.close()
-
-    def proc_func(func, proc_num):
-        for conn_recv, conn_send in in_pipes:
-            conn_send.close()
-        conn_recv = in_pipes[proc_num][0]
-        conn_send = out_pipes[proc_num][1]
-        while True:
-            try:
-                line = conn_recv.recv()
-            except EOFError:
-                break
-            conn_send.send(func(line))
-        conn_send.close()
-
-    procs = map(lambda x: Process(target=proc_func, args=(func, x)), range(processes))
-    for i in range(processes):
-        procs[i].start()
-        out_pipes[i][1].close()
-    write_proc = Thread(target=writer)
-    write_proc.start()
-
-    current_pipe = 0
-    live_pipes = [True] * processes
-    while True:
-        if not any(live_pipes):
-            break
-        if live_pipes[current_pipe]:
-            try:
-                yield out_pipes[current_pipe][0].recv()
-            except EOFError:
-                live_pipes[current_pipe] = False
-        current_pipe = current_pipe + 1
-        if current_pipe >= processes:
-            current_pipe = 0
 
 
 def learn(args):
     reserved_tokens = None
     if args.reserved:
-        reserved_tokens = map(lambda x: x.strip("\n"), codecs.open(args.reserved, "r", "utf-8").readlines())
-        reserved_tokens = list(token for token in reserved_tokens if token)
-        reserved_tokens = RESERVED_TOKENS + reserved_tokens
-    word_count = defaultdict(int)
+        f = io.TextIOWrapper(io.BufferedReader(io.FileIO(args.reserved, "r")), encoding='utf-8')
+        reserved_tokens = []
+        for subtoken in f:
+            reserved_tokens.append(subtoken.strip('\n'))
+        f.close()
+    token_counts = defaultdict(int)
+
+    def tokenize(line):
+        line = normalize(line.strip('\n'))
+        if not arags.no_encode_controls:
+            line = encode_controls(line)
+        return ReTokenizer.tokenize(line)
+
     if args.processes == 1:
         for l in sys.stdin:
-            l = ReTokenizer.tokenize(l.strip('\n'))
-            for token in l:
-                word_count[token] += 1
+            for token in tokenize(l):
+                token_counts[token] += 1
     else:
-        for l in multiprocess(lambda x: ReTokenizer.tokenize(x.strip('\n')), sys.stdin, processes=args.processes):
+        for l in multiprocess(tokenize, sys.stdin, processes=args.processes):
             for token in l:
-                word_count[token] += 1
-    subdict = Subwords.build_to_target_size(args.size, word_count, 1, 1e3, reserved_tokens=reserved_tokens)
-    subdict.store_to_file(args.output)
+                token_counts[token] += 1
+    subdict = SubTokenizer.learn(args.size, token_counts, 1, 1e3, reserved_tokens=reserved_tokens, min_symbol_count=args.min_symbol_count)
+    subdict.save(args.output)
 
 
 def tokenize(args):
-    subdict = None
+    subwords = None
     if args.subwords:
-        subdict = Subwords(args.subwords)
+        subwords = Subwords(args.subwords)
 
     def proc_func(l):
-        l = l.strip('\n')
+        l = normalize(l.strip('\n'))
+        if subwords():
+            encode_controls = not arags.no_encode_controls
+            return subwords.tokenize(l, encode_controls=encode_controls, numeric=args.numeric, add_eos=args.add_eos)
+        if not arags.no_encode_controls:
+            line = encode_controls(line)
         tokens = ReTokenizer.tokenize(l)
-        if subdict:
-            if args.numeric:
-                tokens = itertools.chain.from_iterable(map(str, subdict.token_to_subtokens_ids(token)) for token in tokens)
-            else:
-                tokens = itertools.chain.from_iterable(subdict.token_to_subtokens(token) for token in tokens)
-        tokens = list(tokens)
-        if args.add_end:
-            tokens += [str(EOS_ID) if args.numeric else EOS]
+        if args.add_eos:
+            tokens.append(EOS)
         return tokens
 
     if args.processes == 1:
@@ -113,21 +71,23 @@ def tokenize(args):
             sys.stdout.write('\n')
 
 
-def detokenize(args):
-    subdict = None
+def detokenize(HTML_PARSER, args):
+    subwords = None
     if args.subwords:
-        subdict = Subwords(args.subwords)
+        subwords = Subwords(args.subwords)
 
     def proc_func(l):
         l = l.strip('\n').split(' ')
-        if subdict:
-            if args.numeric:
-                tokens = subdict.subtoken_ids_to_tokens(int(t) for t in l if t != str(EOS_ID))
-            else:
-                tokens = subdict.subtokens_to_tokens(t for t in l if t != EOS)
-        else:
-            tokens = l
-        return ReTokenizer.detokenize(tokens)
+        if subwords:
+            decode = not args.no_decode
+            return subwords.detokenize(l, decode=decode, numeric=args.numeric)
+        if subwords[-1] == EOS:
+            subwords = subwords[:-1]
+        text = ReTokenizer.detokenize(tokens)
+        if not args.no_decode:
+            text = text.replace(NOBREAK, '')
+            text = HTML_PARSER.unescape(text)
+        return text
 
     if args.processes == 1:
         for l in sys.stdin:
@@ -140,38 +100,67 @@ def detokenize(args):
             sys.stdout.write('\n')
 
 
-def main():
-    if sys.version_info < (3, 0):
-        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
-        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
-        sys.stdin = codecs.getreader('UTF-8')(sys.stdin)
-    else:
-        sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', write_through=True, line_buffering=True)
+def encode(args):
+    for line in sys.stdin:
+        line = encode_controls(normalize(line))
+        sys.stdout.write(line)
 
+
+def decode(HTML_PARSER, args):
+    for line in sys.stdin:
+        text = text.replace(NOBREAK, '')
+        text = HTML_PARSER.unescape(text)
+        sys.stdout.write(line)
+
+
+def get_parser():
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='there are two modes: 1) learn 2) tokenize 3) detokenize', dest="mode")
-    parser_learn = subparsers.add_parser('learn', help='a help')
+    subparsers = parser.add_subparsers(help='there are following modes: '
+                                       '1) learn 2) tokenize 3) detokenize 4) encode 5) decode', dest="mode")
+    parser_learn = subparsers.add_parser('learn', help='learn subtokens from text')
     parser_learn.add_argument('-r', '--reserved',  type=str, help="file with reserved tokens")
     parser_learn.add_argument('-o', '--output', required=True,  type=str, help="subwords dictionary")
     parser_learn.add_argument('-s', '--size', default=30000,  type=int, help="number of subtokens")
     parser_learn.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
-    parser_tokenize = subparsers.add_parser('tokenize', help='a help')
+    parser_learn.add_argument('-m', '--min_symbol_count', default=1,  type=int, help="minimal character count to be in alphabet")
+    parser_learn.add_argument('-c', '--no_encode_controls', action='store_true', help="do not encode control symbols")
+    parser_tokenize = subparsers.add_parser('tokenize', help='tokenize text')
     parser_tokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_tokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
     parser_tokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes") 
-    parser_tokenize.add_argument('-e', '--add_end', action='store_true', help="add end of line")
-    parser_detokenize = subparsers.add_parser('detokenize', help='a help')
+    parser_tokenize.add_argument('-e', '--add_eos', action='store_true', help="add end of line")
+    parser_tokenize.add_argument('-c', '--no_encode_controls', action='store_true', help="do not encode control symbols")
+    parser_detokenize = subparsers.add_parser('detokenize', help='restore tokenized text')
     parser_detokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_detokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
     parser_detokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
+    parser_detokenize.add_argument('-d', '--no_decode', action='store_true', help="do not decode encoded symbols")
+    parser_decode = subparsers.add_parser('decode', help='decoding encoded symbols')
+    parser_encode = subparsers.add_parser('encode', help='unicode normalization and encodeing contrlos symbols')
+    return parser
+
+
+def main():
+    HTML_PARSER = HTMLParser()
+    sys.stdin = wrap_text_reader(sys.stdin, encoding='utf-8')
+    if sys.version_info < (3, 0):
+        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
+        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
+    else:
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', write_through=True, line_buffering=True)
+
+    parser = get_parser()
     args = parser.parse_args()
     if args.mode == 'learn':
         learn(args)
     elif args.mode == 'tokenize':
         tokenize(args)
     elif args.mode == 'detokenize':
-        detokenize(args)
+        detokenize(HTML_PARSER, args)
+    elif args.mode == 'decode':
+        decode(HTML_PARSER, args)
+    elif args.mode == 'encode':
+        encode(args)
     else:
         print('unknown mode')

@@ -3,75 +3,73 @@ from __future__ import unicode_literals
 
 import regex
 from six import iteritems
-#     ■ - unbreakeble space inside token
-#     ￭ - no space joiner
-#     ＠＠ - placeholder
+from subtokenizer.utils import NOSPACE, ENCODED, SPACESYMBOL, NOBREAK, TAGSYMBOL
+
+
 
 class ReTokenizer(object):
-    JOINER_SYMBOL = '￭'
-    SPACE_SYMBOL = '■'
     LANGUAGES = ["Arabic","Armenian","Bengali","Bopomofo","Braille","Buhid",
                  "Canadian_Aboriginal","Cherokee","Cyrillic","Devanagari","Ethiopic","Georgian",
                  "Greek","Gujarati","Gurmukhi","Han","Hangul","Hanunoo","Hebrew","Hiragana",
                  "Inherited","Kannada","Katakana","Khmer","Lao","Latin","Limb","Malayalam",
                  "Mongolian","Myanmar","Ogham","Oriya","Runic","Sinhala","Syriac","Tagalog",
                  "Tagbanwa","TaiLe","Tamil","Thaana","Thai","Tibetan","Yi","N"]
-    WORD = '(?P<WORD>' + '|'.join(r'[\p{{{0}}}][\p{{{0}}}\p{{M}}■]*'.format(lang) for lang in LANGUAGES) + ')'
-    PLACEHOLDER = '(?P<PLACEHOLDER>＠＠[A-Za-z0-9]*)'
-    SPACE = r'(?P<SPACE>[\p{Z}])'
-    REST = r'(?P<REST>[^\p{Z}\p{L}\p{M}\p{N}＠]+|(?<!＠)＠(?!＠))'
-    TOKENIZER_RE = regex.compile(r'(?V1p)' + '|'.join((WORD, PLACEHOLDER, SPACE, REST)))
-    JOINER_RE = regex.compile(r'(?V1p)' + JOINER_SYMBOL)
-    SPACE_RE = regex.compile(r'(?V1p)' + SPACE_SYMBOL)
+    WORD = '(?P<WORD>' + '|'.join(r'{0}?[\p{{{1}}}][\p{{{1}}}\p{{M}}]*{2}?'.format(NOBREAK, lang, SPACESYMBOL) for lang in LANGUAGES) + ')'
+    ENCODED = '(?P<ENCODED>&#[0-9]+;)'
+    TAG = '(?P<TAG>'+TAGSYMBOL+'[a-zA-Z0-9_]+'+SPACESYMBOL+'?)'
+    TOKENIZER_RE = regex.compile(r'(?V1p)' + '|'.join((WORD, ENCODED, TAG)))
+    REMOVE_SPACE_RE = regex.compile(r'(?V1p) ' + NOBREAK + '?' + NOSPACE)
 
 
     @classmethod
-    def tokenize_with_types(cls, sentence):
-        tokens = []
-        token_types = []
-        privous_token_type = 'SPACE'
-        space_added = True
-        for w_it in cls.TOKENIZER_RE.finditer(sentence):
-            word = sentence[w_it.start():w_it.end()]
-            token_type = next(k for k, v in iteritems(w_it.groupdict()) if v is not None)
-            if token_type in ('WORD', 'PLACEHOLDER'):
-                if privous_token_type in ('WORD', 'PLACEHOLDER'):
-                    tokens.append(cls.JOINER_SYMBOL)
-                    token_types.append('REST')
-                tokens.append(word)
-                token_types.append(token_type)
-                space_added = False
-            elif token_type  == 'REST':
-                if privous_token_type == 'SPACE' and not space_added:
-                    word = ''.join((cls.SPACE_SYMBOL, word))
-                tokens.append(word)
-                token_types.append(token_type)
-                space_added = False
-            elif token_type == 'SPACE':
-                if privous_token_type == 'REST':
-                    tokens[-1] = ''.join((tokens[-1], cls.SPACE_SYMBOL))
-                    space_added = True
-                if privous_token_type == 'SPACE':
-                    tokens.append(cls.SPACE_SYMBOL)
-                    space_added = True
-            privous_token_type = token_type
-        return tokens, token_types
-    
+    def _add_punctuation(cls, words, punctuation):
+        if punctuation[0] == NOBREAK and words:
+            words[-1] = words[-1] + punctuation
+        else:
+            if words and words[-1][-1] != SPACESYMBOL:
+                words[-1] = words[-1] + SPACESYMBOL
+                punctuation = NOSPACE + punctuation
+            words.append(punctuation)
+        return words
     
     @classmethod
-    def tokenize(cls, sentence):
-        tokens, token_types = cls.tokenize_with_types(sentence)
-        return tokens
-
-    @classmethod
-    def detokenize(cls, tokens):
+    def tokenize(cls, text):
         words = []
-        privous_token_type = 'REST'
-        for t in tokens:
-            token_type = next(k for k, v in iteritems(cls.TOKENIZER_RE.match(t).groupdict()) if v is not None)
-            if privous_token_type in ('WORD', 'PLACEHOLDER') and token_type in ('WORD', 'PLACEHOLDER'):
-                words.append(' ')
-            words.append(t)
-            privous_token_type = token_type
-        return cls.SPACE_RE.sub(' ', cls.JOINER_RE.sub('', ''.join(words)))
+        position = 0
+        text = text.replace(' ', SPACESYMBOL)
+        for w_it in cls.TOKENIZER_RE.finditer(text):
+            token_type = next(k for k, v in iteritems(w_it.groupdict()) if v is not None)
+            if token_type == 'ENCODED':
+                continue
+            word = text[w_it.start():w_it.end()]
+            if position < w_it.start():
+                punctuation = text[position:w_it.start()]
+                words = cls._add_punctuation(words, punctuation)
+            if word[0] == NOBREAK and words:
+                words[-1] = words[-1] + word
+            else:
+                words.append(word)
+            position = w_it.end()
+        if position != len(text):
+            punctuation = text[position:len(text)]
+            words = cls._add_punctuation(words, punctuation)
+        elif words and words[-1][-1] != SPACESYMBOL:
+            words[-1] = words[-1] + SPACESYMBOL
+            words.append(NOSPACE)
+        return words
 
+
+    @classmethod
+    def detokenize(cls, words):
+        text = cls.REMOVE_SPACE_RE.sub('', ''.join(words).replace(SPACESYMBOL, ' '))
+        return text
+
+
+    @classmethod
+    def encode_combined_word(cls, word):
+        subwords = cls.tokenize(word)
+        for i in range(1, len(subwords)):
+            subwords[i] = NOBREAK + subwords[i]
+        word = ''.join(subwords)
+        word = cls.REMOVE_SPACE_RE.sub('', word.replace(SPACESYMBOL, ' '))
+        return word

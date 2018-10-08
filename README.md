@@ -16,11 +16,10 @@ cat text_file.txt | subtokenizer tokenize -s bpe.file > tokenized_file.txt
 Or:
 ```python
 import itertools
-from subtokenizer import ReTokenizer
-from subtokenizer import Subwords, EOS
+from subtokenizer import SubTokenizer
 
 subdict = Subwords(subwords_filename)
-tokens = itertools.chain.from_iterable(subdict.token_to_subtokens(token) for token in ReTokenizer.tokenize(line))
-line = ReTokenizer.detokenize(subdict.subtokens_to_tokens(t for t in tokens if t != EOS))
+tokens = SubTokenizer.tokenize(line)
+line = SubTokenizer.detokenize(tokens)
 
 ```

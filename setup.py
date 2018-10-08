@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='subtokenizer',
-    version='0.0.1',
+    version='0.0.2',
 
     description='Booking python library for machine translation',
     long_description=long_description,
