@@ -46,11 +46,11 @@ def learn(args):
 def tokenize(args):
     subwords = None
     if args.subwords:
-        subwords = Subwords(args.subwords)
+        subwords = SubTokenizer.load(args.subwords)
 
     def proc_func(l):
         l = normalize_text(l.strip('\n'))
-        if subwords():
+        if subwords:
             encode_controls = not args.no_encode_controls
             return subwords.tokenize(l, encode_controls=encode_controls, numeric=args.numeric, add_eos=args.add_eos)
         if not args.no_encode_controls:
@@ -74,7 +74,7 @@ def tokenize(args):
 def detokenize(HTML_PARSER, args):
     subwords = None
     if args.subwords:
-        subwords = Subwords(args.subwords)
+        subwords = SubTokenizer.load(args.subwords)
 
     def proc_func(l):
         l = l.strip('\n').split(' ')
