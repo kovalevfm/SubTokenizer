@@ -1,6 +1,6 @@
 # SubTokenizer
 Subwords tokenizer based on google code from tensor2tensor. It supports tags and combined tokens in addition to google tokenizer.
-* Tags are tokens starting from `＠` `'\uff20'`, they are not splited on parts.
+* Tags are tokens starting from `@`, they are not splited on parts.
 * No break symbol `¬` `'\xac'` allows to join several words in one token.
 
 Tokenizer does unicode normalization and controls characters escaping. It's also possible to encode rare symbols so they can be splited on parts by subwords algorithm.
