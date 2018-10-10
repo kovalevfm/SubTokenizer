@@ -15,7 +15,7 @@ with open(path.join(here, 'requirements.txt')) as f:
 
 setup(
     name='subtokenizer',
-    version='0.0.2',
+    version='0.0.3',
 
     description='Booking python library for machine translation',
     long_description=long_description,
