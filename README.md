@@ -1,7 +1,13 @@
 # SubTokenizer
-Subwords tokenizer based on google code from tensor2tensor
+Subwords tokenizer based on google code from tensor2tensor. It supports tags and combined tokens in addition to google tokenizer.
+* Tags are tokens starting from `＠` `'\uff20'`, they are not splited on parts.
+* No break symbol `¬` `'\xac'` allows to join several words in one token.
 
-Standalone subwords tokenizer from https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/data_generators/text_encoder.py
+Tokenizer does unicode normalization and controls characters escaping. It's also possible to encode rare symbols so they can be splited on parts by subwords algorithm.
+
+Original google subwords tokenizer: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/data_generators/text_encoder.py
+
+By default before learning and tokenizing SubTokenizer encodes all control characters and `＠` `¬` symbols. To use tags it's needed to run encoding first then add tags and after learn/tokenize with `encode_controls=Flase` or `--no_encode_controls` in command line mode.
 
 Install:
 ```bash
