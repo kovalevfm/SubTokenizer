@@ -10,6 +10,11 @@ from threading import Thread
 from collections import defaultdict
 from multiprocessing import Process, Pipe
 
+if six.PY2:
+    from HTMLParser import HTMLParser
+    HTML_PARSER = HTMLParser()
+else:
+    import html
 
 NOSPACE = '˿'
 ENCODED = '&'
@@ -22,6 +27,13 @@ ESCAPE_CHARS = set("˿&·¬@#;0123456789")
 SPECIALSYMBOLS = set([NOSPACE, ENCODED, SPACESYMBOL, NOBREAK, TAGSYMBOL])
 ALLOWEDCONTROLS = set(['\n', ' ', '\r', '\t'])
 SYMBOLRE = regex.compile(r"&#([0-9]+);")
+
+
+def unescape(text):
+    if six.PY2:
+        return HTML_PARSER.unescape(text)
+    else:
+        return html.unescape(text)
 
 
 def multiprocess(func, in_generator, processes=1):

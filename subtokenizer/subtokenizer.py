@@ -2,8 +2,9 @@
 from __future__ import unicode_literals, absolute_import
 
 import io
-from HTMLParser import HTMLParser
-from subtokenizer.utils import encode_controls, encode_with_alphabet, alphabet_from_tokens, encode_tokens_with_alphabet, NOBREAK, ESCAPE_CHARS, normalize_text
+from subtokenizer.utils import (encode_controls, encode_with_alphabet, unescape,
+                                alphabet_from_tokens, encode_tokens_with_alphabet,
+                                NOBREAK, ESCAPE_CHARS, normalize_text)
 from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS
 from subtokenizer.tokenizer import ReTokenizer
 
@@ -12,7 +13,6 @@ class SubTokenizer(object):
 
     def __init__(self, subtokens_list):
         self.alphabet = {c for token in subtokens_list for c in token}
-        self.HTML_PARSER = HTMLParser()
         self.subwords = Subwords(subtokens_list)
 
     def encode_controls(self, text):
@@ -20,7 +20,7 @@ class SubTokenizer(object):
 
     def decode(self, text):
         text = text.replace(NOBREAK, '')
-        return self.HTML_PARSER.unescape(text)
+        return unescape(text)
 
     def tokenize(self, text, encode_controls=True, numeric=False, add_eos=False):
         text = normalize_text(text)

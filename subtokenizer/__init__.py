@@ -6,9 +6,8 @@ import io
 import sys
 import codecs
 import argparse
-from HTMLParser import HTMLParser
 from collections import defaultdict
-from subtokenizer.utils import wrap_text_reader, multiprocess, encode_controls, normalize_text, NOBREAK
+from subtokenizer.utils import wrap_text_reader, multiprocess, encode_controls, normalize_text, unescape, NOBREAK
 from subtokenizer.subwords import Subwords, EOS
 from subtokenizer.tokenizer import ReTokenizer
 from subtokenizer.subtokenizer import SubTokenizer
@@ -71,7 +70,7 @@ def tokenize(args):
             sys.stdout.write('\n')
 
 
-def detokenize(HTML_PARSER, args):
+def detokenize(args):
     subwords = None
     if args.subwords:
         subwords = SubTokenizer.load(args.subwords)
@@ -86,7 +85,7 @@ def detokenize(HTML_PARSER, args):
         text = ReTokenizer.detokenize(tokens)
         if not args.no_decode:
             text = text.replace(NOBREAK, '')
-            text = HTML_PARSER.unescape(text)
+            text = unescape(text)
         return text
 
     if args.processes == 1:
@@ -106,10 +105,10 @@ def encode(args):
         sys.stdout.write(line)
 
 
-def decode(HTML_PARSER, args):
+def decode(args):
     for line in sys.stdin:
         text = text.replace(NOBREAK, '')
-        text = HTML_PARSER.unescape(text)
+        text = unescape(text)
         sys.stdout.write(line)
 
 
@@ -141,7 +140,6 @@ def get_parser():
 
 
 def main():
-    HTML_PARSER = HTMLParser()
     sys.stdin = wrap_text_reader(sys.stdin, encoding='utf-8')
     if sys.version_info < (3, 0):
         sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
@@ -157,9 +155,9 @@ def main():
     elif args.mode == 'tokenize':
         tokenize(args)
     elif args.mode == 'detokenize':
-        detokenize(HTML_PARSER, args)
+        detokenize(args)
     elif args.mode == 'decode':
-        decode(HTML_PARSER, args)
+        decode(args)
     elif args.mode == 'encode':
         encode(args)
     else:
