@@ -7,8 +7,11 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
+
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 setup(
     name='subtokenizer',
@@ -22,8 +25,8 @@ setup(
     license='MIT',
 
     keywords='nlp tokenization',
-    packages=find_packages(exclude=['contrib', 'docs']),
-    install_requires=['regex', 'six'],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    install_requires=requirements,
     python_requires='>=2.6, <4.0',
     entry_points={
         'console_scripts': [
