@@ -23,10 +23,12 @@ cat text_file.txt | subtokenizer tokenize -s bpe.file > tokenized_file.txt
 ```
 Or:
 ```python
-import itertools
 from subtokenizer import SubTokenizer
 
-subdict = Subwords(subwords_filename)
+tokenizer = SubTokenizer.learn(words_count)
+tokenizer.save(subwords_filename)
+
+tokenizer = Subwords.load(subwords_filename)
 tokens = SubTokenizer.tokenize(line)
 line = SubTokenizer.detokenize(tokens)
 
