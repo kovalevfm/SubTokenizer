@@ -10,12 +10,10 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-with open(path.join(here, 'requirements.txt')) as f:
-    requirements = f.read().splitlines()
 
 setup(
     name='subtokenizer',
-    version='0.0.3',
+    version='0.0.4',
 
     description='Booking python library for machine translation',
     long_description=long_description,
@@ -26,7 +24,7 @@ setup(
 
     keywords='nlp tokenization',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=requirements,
+    install_requires=['six', 'regex'],
     python_requires='>=2.6, <4.0',
     entry_points={
         'console_scripts': [
