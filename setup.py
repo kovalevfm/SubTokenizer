@@ -20,6 +20,7 @@ setup(
 
     author='Fedor Kovalev',
     author_email='kovalevfm@gmail.com',
+    url='https://github.com/kovalevfm/SubTokenizer',
     license='MIT',
 
     keywords='nlp tokenization',
