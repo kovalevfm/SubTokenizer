@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='subtokenizer',
-    version='0.0.5',
+    version='0.0.6',
 
     description='Subwords tokenizer for neural natural language processing',
     long_description=long_description,
@@ -25,7 +25,7 @@ setup(
 
     keywords='nlp tokenization',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=['six', 'regex'],
+    install_requires=['six', 'regex', 'future'],
     python_requires='>=2.6, <4.0',
     entry_points={
         'console_scripts': [
