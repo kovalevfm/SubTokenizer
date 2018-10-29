@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, division, absolute_import
 
+from past.builtins import basestring 
 from collections import defaultdict
 from subtokenizer.subtokenizer import SubTokenizer
 from subtokenizer.tokenizer import ReTokenizer
@@ -55,3 +56,31 @@ def test_subtokenizer():
     s = TAGSYMBOL + 'name is just across from store.'
     tokens = st_test.tokenize(s, encode_controls=False)
     assert TAGSYMBOL + 'name' in tokens
+
+    # EOS
+    s = 'Some rare symbols: ¦~. Email house@store.com'
+    tokens = st_test.tokenize(s, add_eos=True)
+    assert not TAGSYMBOL + 'store' in tokens
+    assert s == st_test.detokenize(tokens)
+
+
+def test_numeric():
+    words_count = defaultdict(int)
+    for l in TEXT.splitlines():
+        res = ReTokenizer.tokenize(l.strip('\n'))
+        for r in res:
+            words_count[r] += 1
+
+    st_test = SubTokenizer.learn(words_count, min_symbol_count=2, size=70, reserved_tokens=[TAGSYMBOL + 'name'])
+
+    # Detokenization
+    s = 'Some rare symbols: ¦~. Email house@store.com'
+    tokens = st_test.tokenize(s, numeric=True)
+    assert all(map(lambda x: isinstance(x, basestring), tokens))
+    assert s == st_test.detokenize(tokens, numeric=True)
+
+    # EOS
+    s = 'Some rare symbols: ¦~. Email house@store.com'
+    tokens = st_test.tokenize(s, numeric=True, add_eos=True)
+    assert all(map(lambda x: isinstance(x, basestring), tokens))
+    assert s == st_test.detokenize(tokens, numeric=True)

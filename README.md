@@ -13,7 +13,7 @@ By default before learning and tokenizing SubTokenizer encodes all control chara
 
 Install:
 ```bash
- pip install git+https://github.com/kovalevfm/SubTokenizer.git
+ pip install subtokenizer
 ```
 
 Usage:

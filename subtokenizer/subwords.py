@@ -1,5 +1,8 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import re
 import six
@@ -58,10 +61,10 @@ class Subwords(object):
         return ret
 
     def subtokens_to_ids(self, subtokens):
-        return list(self.subtoken_string_to_id[subtoken] for subtoken in subtokens)
+        return list(unicode(self.subtoken_string_to_id[subtoken]) for subtoken in subtokens)
 
     def ids_to_subtokens(self, subtokens):
-        return list(self.all_subtoken_strings[subtoken] for subtoken in subtokens)
+        return list(self.all_subtoken_strings[int(subtoken)] for subtoken in subtokens)
 
     @classmethod
     def build_from_token_counts(cls, token_counts, min_count, reserved_tokens, alphabet,
@@ -190,3 +193,4 @@ class Subwords(object):
             return subtokenizer
 
         return bisect(min_val, max_val)
+

@@ -13,9 +13,9 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='subtokenizer',
-    version='0.0.4',
+    version='0.0.5',
 
-    description='Booking python library for machine translation',
+    description='Subwords tokenizer for neural natural language processing',
     long_description=long_description,
 
     author='Fedor Kovalev',
