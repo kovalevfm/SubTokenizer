@@ -7,6 +7,7 @@ from __future__ import print_function
 import re
 import six
 import collections
+from builtins import str
 from itertools import chain
 
 # Reserved tokens for things like padding and EOS symbols.
@@ -61,7 +62,7 @@ class Subwords(object):
         return ret
 
     def subtokens_to_ids(self, subtokens):
-        return list(unicode(self.subtoken_string_to_id[subtoken]) for subtoken in subtokens)
+        return list(str(self.subtoken_string_to_id[subtoken]) for subtoken in subtokens)
 
     def ids_to_subtokens(self, subtokens):
         return list(self.all_subtoken_strings[int(subtoken)] for subtoken in subtokens)

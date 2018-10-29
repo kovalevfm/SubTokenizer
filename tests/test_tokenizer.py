@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, division, absolute_import
 
-from past.builtins import basestring 
+from builtins import str
 from collections import defaultdict
 from subtokenizer.subtokenizer import SubTokenizer
 from subtokenizer.tokenizer import ReTokenizer
@@ -76,11 +76,11 @@ def test_numeric():
     # Detokenization
     s = 'Some rare symbols: ¦~. Email house@store.com'
     tokens = st_test.tokenize(s, numeric=True)
-    assert all(map(lambda x: isinstance(x, basestring), tokens))
+    assert all(map(lambda x: isinstance(x, str), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
 
     # EOS
     s = 'Some rare symbols: ¦~. Email house@store.com'
     tokens = st_test.tokenize(s, numeric=True, add_eos=True)
-    assert all(map(lambda x: isinstance(x, basestring), tokens))
+    assert all(map(lambda x: isinstance(x, str), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
