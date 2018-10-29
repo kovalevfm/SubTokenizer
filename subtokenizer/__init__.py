@@ -4,6 +4,7 @@ from __future__ import unicode_literals, division, absolute_import
 
 import io
 import sys
+import six
 import codecs
 import argparse
 from collections import defaultdict
@@ -140,7 +141,8 @@ def get_parser():
 
 
 def main():
-    sys.stdin = wrap_text_reader(sys.stdin, encoding='utf-8')
+    if six.PY2:
+        sys.stdin = wrap_text_reader(sys.stdin, encoding='utf-8')
     if sys.version_info < (3, 0):
         sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
         sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
