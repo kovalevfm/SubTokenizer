@@ -20,7 +20,7 @@ Usage:
 ```bash
 cat text_file.txt | subtokenizer learn -o bpe.file -s 1000 -r reserved_tokens.txt
 cat text_file.txt | subtokenizer tokenize -s bpe.file > tokenized_file.txt
-cat tokenized_file.txt | subtokenizer detokenize -s bpe.file > tokenized_file.txt
+cat tokenized_file.txt | subtokenizer detokenize -s bpe.file > text_file.txt
 ```
 Or:
 ```python
