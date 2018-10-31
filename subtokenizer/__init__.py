@@ -44,45 +44,45 @@ def learn(args):
 
 
 def tokenize(args):
-    subwords = None
+    subtok = None
     if args.subwords:
-        subwords = SubTokenizer.load(args.subwords)
+        subtok = SubTokenizer.load(args.subwords)
 
-    def proc_func(l):
-        l = normalize_text(l.strip('\n'))
-        if subwords:
-            encode_controls = not args.no_encode_controls
-            return subwords.tokenize(l, encode_controls=encode_controls, numeric=args.numeric, add_eos=args.add_eos)
+    def tok_func(l):
+        line = normalize_text(l.strip('\n'))
+        if subtok:
+            enc_ctrl = not args.no_encode_controls
+            return subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos)
         if not args.no_encode_controls:
             line = encode_controls(line)
-        tokens = ReTokenizer.tokenize(l)
+        tokens = ReTokenizer.tokenize(line)
         if args.add_eos:
             tokens.append(EOS)
         return tokens
 
     if args.processes == 1:
         for l in sys.stdin:
-            tokens = proc_func(l)
+            tokens = tok_func(l)
             sys.stdout.write(' '.join(tokens))
             sys.stdout.write('\n')
     else:
-        for tokens in multiprocess(proc_func, sys.stdin, processes=args.processes):
+        for tokens in multiprocess(tok_func, sys.stdin, processes=args.processes):
             sys.stdout.write(' '.join(tokens))
             sys.stdout.write('\n')
 
 
 def detokenize(args):
-    subwords = None
+    subtok = None
     if args.subwords:
-        subwords = SubTokenizer.load(args.subwords)
+        subtok = SubTokenizer.load(args.subwords)
 
-    def proc_func(l):
-        l = l.strip('\n').split(' ')
-        if subwords:
+    def detok_func(l):
+        tokens = l.strip('\n').split(' ')
+        if subtok:
             decode = not args.no_decode
-            return subwords.detokenize(l, decode=decode, numeric=args.numeric)
-        if subwords[-1] == EOS:
-            subwords = subwords[:-1]
+            return subtok.detokenize(tokens, decode=decode, numeric=args.numeric)
+        if tokens[-1] == EOS:
+            tokens = tokens[:-1]
         text = ReTokenizer.detokenize(tokens)
         if not args.no_decode:
             text = text.replace(NOBREAK, '')
@@ -91,11 +91,11 @@ def detokenize(args):
 
     if args.processes == 1:
         for l in sys.stdin:
-            line = proc_func(l)
+            line = detok_func(l)
             sys.stdout.write(line)
             sys.stdout.write('\n')
     else:
-        for line in multiprocess(proc_func, sys.stdin, processes=args.processes):
+        for line in multiprocess(detok_func, sys.stdin, processes=args.processes):
             sys.stdout.write(line)
             sys.stdout.write('\n')
 
