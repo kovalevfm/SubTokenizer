@@ -4,6 +4,7 @@ from __future__ import unicode_literals, division, absolute_import
 from builtins import str
 from collections import defaultdict
 from subtokenizer.subtokenizer import SubTokenizer
+from subtokenizer.subwords import PAD_ID
 from subtokenizer.tokenizer import ReTokenizer
 from subtokenizer.utils import TAGSYMBOL
 
@@ -76,6 +77,7 @@ def test_numeric():
     # Detokenization
     s = 'Some rare symbols: ¦~. Email house@store.com'
     tokens = st_test.tokenize(s, numeric=True)
+    tokens.append(PAD_ID)
     assert all(map(lambda x: isinstance(x, str), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
 
