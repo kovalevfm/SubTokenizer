@@ -5,7 +5,7 @@ import io
 from subtokenizer.utils import (encode_controls, encode_with_alphabet, unescape,
                                 alphabet_from_tokens, encode_tokens_with_alphabet,
                                 NOBREAK, ESCAPE_CHARS, normalize_text)
-from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS
+from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS, PAD
 from subtokenizer.tokenizer import ReTokenizer
 
 
@@ -39,8 +39,7 @@ class SubTokenizer(object):
     def detokenize(self, tokens, decode=True, numeric=False):
         if numeric:
             tokens = self.subwords.ids_to_subtokens(tokens)
-        if tokens[-1] == EOS:
-            tokens = tokens[:-1]
+        tokens = list(token for token in tokens if token not in (EOS, PAD))
         text = ReTokenizer.detokenize(tokens)
         if decode:
             text = self.decode(text)

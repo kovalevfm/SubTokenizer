@@ -29,8 +29,8 @@ from subtokenizer import SubTokenizer
 tokenizer = SubTokenizer.learn(words_count)
 tokenizer.save(subwords_filename)
 
-tokenizer = Subwords.load(subwords_filename)
-tokens = SubTokenizer.tokenize(line)
-line = SubTokenizer.detokenize(tokens)
+tokenizer = SubTokenizer.load(subwords_filename)
+tokens = tokenizer.tokenize(line)
+line = tokenizer.detokenize(tokens)
 
 ```
