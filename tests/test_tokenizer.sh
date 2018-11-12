@@ -29,7 +29,7 @@ I am going to the shop.
 John went to a store.
 EOM
 
-echo "$TEXT" | python -m subtokenizer learn -o bpe.file -s 70
+echo "$TEXT" | python -m subtokenizer learn -o bpe.file -s 70 -m 2
 
 # just tokenizer
 echo "$TEXT" | python -m subtokenizer tokenize | python -m subtokenizer detokenize | diff - <( echo "$TEXT" )
