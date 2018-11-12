@@ -62,10 +62,10 @@ class Subwords(object):
         return ret
 
     def subtokens_to_ids(self, subtokens):
-        return list(str(self.subtoken_string_to_id[subtoken]) for subtoken in subtokens)
+        return list(self.subtoken_string_to_id[subtoken] for subtoken in subtokens)
 
     def ids_to_subtokens(self, subtokens):
-        return list(self.all_subtoken_strings[int(subtoken)] for subtoken in subtokens)
+        return list(self.all_subtoken_strings[subtoken] for subtoken in subtokens)
 
     @classmethod
     def build_from_token_counts(cls, token_counts, min_count, reserved_tokens, alphabet,

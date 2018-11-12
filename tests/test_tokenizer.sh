@@ -31,6 +31,13 @@ EOM
 
 echo "$TEXT" | python -m subtokenizer learn -o bpe.file -s 70
 
+# just tokenizer
+echo "$TEXT" | python -m subtokenizer tokenize | python -m subtokenizer detokenize | diff - <( echo "$TEXT" )
+# subwords
 echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file | python -m subtokenizer detokenize -s bpe.file | diff - <( echo "$TEXT" )
+# eos
+echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -e | python -m subtokenizer detokenize -s bpe.file | diff - <( echo "$TEXT" )
+# numeric
 echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n | python -m subtokenizer detokenize -s bpe.file -n | diff - <( echo "$TEXT" )
-echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n | diff - <( echo "$TEXT" )
+# numeric + eos
+echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n -e | python -m subtokenizer detokenize -s bpe.file -n | diff - <( echo "$TEXT" )

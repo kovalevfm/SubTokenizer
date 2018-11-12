@@ -52,7 +52,10 @@ def tokenize(args):
         line = normalize_text(l.strip('\n'))
         if subtok:
             enc_ctrl = not args.no_encode_controls
-            return subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos)
+            tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos)
+            if args.numeric:
+                tokens = map(str, tokens)
+            return tokens
         if not args.no_encode_controls:
             line = encode_controls(line)
         tokens = ReTokenizer.tokenize(line)
@@ -80,6 +83,8 @@ def detokenize(args):
         tokens = l.strip('\n').split(' ')
         if subtok:
             decode = not args.no_decode
+            if args.numeric:
+                tokens = map(int, tokens)
             return subtok.detokenize(tokens, decode=decode, numeric=args.numeric)
         if tokens[-1] == EOS:
             tokens = tokens[:-1]

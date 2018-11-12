@@ -39,14 +39,11 @@ class SubTokenizer(object):
     def detokenize(self, tokens, decode=True, numeric=False):
         if numeric:
             tokens = self.subwords.ids_to_subtokens(tokens)
-        
         try:
             eos_index = list(tokens).index(EOS)
             tokens = tokens[:eos_index]
         except:
             pass
-        # # return subtokenizer.decode(ids[:index])
-        # tokens = list(token for token in tokens if token not in (EOS, PAD))
         text = ReTokenizer.detokenize(tokens)
         if decode:
             text = self.decode(text)

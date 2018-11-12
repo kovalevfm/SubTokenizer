@@ -77,12 +77,12 @@ def test_numeric():
     # Detokenization
     s = 'Some rare symbols: ¦~. Email house@store.com'
     tokens = st_test.tokenize(s, numeric=True)
-    tokens.append(PAD_ID)
-    assert all(map(lambda x: isinstance(x, str), tokens))
+    assert all(map(lambda x: isinstance(x, int), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
 
     # EOS
     s = 'Some rare symbols: ¦~. Email house@store.com'
     tokens = st_test.tokenize(s, numeric=True, add_eos=True)
-    assert all(map(lambda x: isinstance(x, str), tokens))
+    tokens.append(PAD_ID)
+    assert all(map(lambda x: isinstance(x, int), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
