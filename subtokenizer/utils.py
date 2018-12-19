@@ -37,8 +37,8 @@ def unescape(text):
 
 
 def multiprocess(func, in_generator, processes=1):
-    in_pipes = map(lambda x: Pipe(False), range(processes))
-    out_pipes = map(lambda x: Pipe(False), range(processes))
+    in_pipes = list(map(lambda x: Pipe(False), range(processes)))
+    out_pipes = list(map(lambda x: Pipe(False), range(processes)))
 
     def writer():
         pipe_cnt = 0
@@ -63,7 +63,7 @@ def multiprocess(func, in_generator, processes=1):
             conn_send.send(func(line))
         conn_send.close()
 
-    procs = map(lambda x: Process(target=proc_func, args=(func, x)), range(processes))
+    procs = list(map(lambda x: Process(target=proc_func, args=(func, x)), range(processes)))
     for i in range(processes):
         procs[i].start()
         out_pipes[i][1].close()
