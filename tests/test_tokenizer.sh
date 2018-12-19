@@ -42,6 +42,6 @@ echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n | python -m subtok
 # numeric + eos
 echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n -e | python -m subtokenizer detokenize -s bpe.file -n | diff - <( echo "$TEXT" )
 # python2 multyprocessing
-echo "$TEXT" | python2 -m subtokenizer tokenize -p 2 | python2 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
+echo "$TEXT" | python -m subtokenizer tokenize -p 2 | python -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
 # python3 multyprocessing
-echo "$TEXT" | python3 -m subtokenizer tokenize -p 2 | python3 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
+#echo "$TEXT" | python3 -m subtokenizer tokenize -p 2 | python3 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
