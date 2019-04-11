@@ -9,6 +9,12 @@ from subtokenizer.subwords import Subwords, RESERVED_TOKENS, EOS, PAD
 from subtokenizer.tokenizer import ReTokenizer
 
 
+def UntilEOS(generator):
+    for item in generator:
+        if item == EOS:
+            break
+        yield item
+
 class SubTokenizer(object):
 
     def __init__(self, subtokens_list):
@@ -39,12 +45,7 @@ class SubTokenizer(object):
     def detokenize(self, tokens, decode=True, numeric=False):
         if numeric:
             tokens = self.subwords.ids_to_subtokens(tokens)
-        try:
-            eos_index = list(tokens).index(EOS)
-            tokens = tokens[:eos_index]
-        except:
-            pass
-        text = ReTokenizer.detokenize(tokens)
+        text = ReTokenizer.detokenize(UntilEOS(tokens))
         if decode:
             text = self.decode(text)
         return text

@@ -86,3 +86,9 @@ def test_numeric():
     tokens.append(PAD_ID)
     assert all(map(lambda x: isinstance(x, int), tokens))
     assert s == st_test.detokenize(tokens, numeric=True)
+
+    # Generator
+    s = 'Some rare symbols: ¦~. Email house@store.com'
+    tokens = st_test.tokenize(s)
+    assert not TAGSYMBOL + 'store' in tokens
+    assert s == st_test.detokenize(tokens.__iter__())
