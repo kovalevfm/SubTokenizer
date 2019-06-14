@@ -21,12 +21,12 @@ def learn(args):
         f = io.TextIOWrapper(io.BufferedReader(io.FileIO(args.reserved, "r")), encoding='utf-8')
         reserved_tokens = []
         for subtoken in f:
-            reserved_tokens.append(subtoken.strip('\n'))
+            reserved_tokens.append(subtoken.strip('\r\n'))
         f.close()
     token_counts = defaultdict(int)
 
     def tokenize(line):
-        line = normalize_text(line.strip('\n'))
+        line = normalize_text(line.strip('\r\n'))
         if not args.no_encode_controls:
             line = encode_controls(line)
         return ReTokenizer.tokenize(line)
@@ -49,7 +49,7 @@ def tokenize(args):
         subtok = SubTokenizer.load(args.subwords)
 
     def tok_func(l):
-        line = normalize_text(l.strip('\n'))
+        line = normalize_text(l.strip('\r\n'))
         if subtok:
             enc_ctrl = not args.no_encode_controls
             tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos)
@@ -80,7 +80,7 @@ def detokenize(args):
         subtok = SubTokenizer.load(args.subwords)
 
     def detok_func(l):
-        tokens = l.strip('\n').split(' ')
+        tokens = l.strip('\r\n').split(' ')
         if subtok:
             decode = not args.no_decode
             if args.numeric:

@@ -8,12 +8,12 @@ The store is just across from my house.
 The store is close to my house.
 The store is not open today.
 The store is closed today.
-The shop is open from today to tomorrow.
+The shop is open from today to tomorrow.\r\n
 The store is just across from the store.
 This is a store that sells food.
 We went into a shop to get some food.
 The store closes at 7.
-That store sells food.
+That store sells food.\r\n
 That store sells a wide range of goods.
 I have been to the store.
 I like to shop at that store.
@@ -28,6 +28,8 @@ This shop is open from 7 to 7 o'clock.
 I am going to the shop.
 John went to a store.
 EOM
+
+ENDOFLINES=$'The store is just across from my house.\r\nThe store is close to my house.\r\nThe store is closed today.\nThe store closes at 7.\r\n'
 
 echo "$TEXT" | python -m subtokenizer learn -o bpe.file -s 70 -m 2
 
@@ -45,3 +47,7 @@ echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n -e | python -m sub
 echo "$TEXT" | python -m subtokenizer tokenize -p 2 | python -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
 # python3 multyprocessing
 #echo "$TEXT" | python3 -m subtokenizer tokenize -p 2 | python3 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
+
+# test windows end of lines
+echo "$ENDOFLINES" | python -m subtokenizer learn -o eof.file -s 70 -m 2
+cat eof.file | awk '{if (match($0, /\r/)) {print NR, $0; exit 1}}'

@@ -25,7 +25,7 @@ TAGSYMBOL = '@'
 ESCAPE_CHARS = set("˿&·¬@#;0123456789")
 
 SPECIALSYMBOLS = set([NOSPACE, ENCODED, SPACESYMBOL, NOBREAK, TAGSYMBOL])
-ALLOWEDCONTROLS = set(['\n', ' ', '\r', '\t'])
+ALLOWEDCONTROLS = set(['\n', ' ', '\t'])
 SYMBOLRE = regex.compile(r"&#([0-9]+);")
 
 

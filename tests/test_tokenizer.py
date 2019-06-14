@@ -8,7 +8,7 @@ from subtokenizer.subwords import PAD_ID
 from subtokenizer.tokenizer import ReTokenizer
 from subtokenizer.utils import TAGSYMBOL
 
-TEXT = ('The store is just across from my house.\n'
+TEXT = ('The store is just across from my house.\r\n'
             'The store is close to my house.\n'
             'The store is not open today.\n'
             'The store is closed today.\n'
@@ -18,7 +18,7 @@ TEXT = ('The store is just across from my house.\n'
             'We went into a shop to get some food.\n'
             'The store closes at 7.\n'
             'That store sells food.\n'
-            'That store sells a wide range of goods.\n'
+            'That store sells a wide range of goods.\r\n'
             'I have been to the store.\n'
             'I like to shop at that store.\n'
             'I bought some food at that shop.\n'
