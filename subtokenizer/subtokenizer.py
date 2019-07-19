@@ -72,5 +72,8 @@ class SubTokenizer(object):
         alphabet |= {c for token in reserved_tokens for c in token}
         alphabet |= ESCAPE_CHARS
         token_counts = encode_tokens_with_alphabet(token_counts, alphabet)
-        subwords = Subwords.build_to_target_size(size, token_counts, 1, 1e3, reserved_tokens, alphabet)
+        # Upper bound heuristic
+        counts = sorted(token_counts.values())
+        upper_bound = counts[int(len(counts) - target_size * 0.01)]
+        subwords = Subwords.build_to_target_size(size, token_counts, 1, upper_bound, reserved_tokens, alphabet)
         return cls(subwords.all_subtoken_strings)

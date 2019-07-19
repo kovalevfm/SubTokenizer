@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import re
 import six
+import logging
 import collections
 from builtins import str
 from itertools import chain
@@ -179,7 +180,7 @@ class Subwords(object):
             # If min_val == max_val, we can't do any better than this.
             if is_ok or min_val >= max_val or present_count < 2:
                 return subtokenizer
-
+            logging.warning("vocab_size {0}, target_size: {1}, preset: {2}".format(subtokenizer.vocab_size, target_size, present_count))
             if subtokenizer.vocab_size > target_size:
                 other_subtokenizer = bisect(present_count + 1, max_val)
             else:
