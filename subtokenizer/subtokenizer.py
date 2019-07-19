@@ -74,6 +74,6 @@ class SubTokenizer(object):
         token_counts = encode_tokens_with_alphabet(token_counts, alphabet)
         # Upper bound heuristic
         counts = sorted(token_counts.values())
-        upper_bound = counts[int(len(counts) - target_size * 0.01)]
+        upper_bound = max(counts[int(len(counts) - size * 0.01)], 1000)
         subwords = Subwords.build_to_target_size(size, token_counts, 1, upper_bound, reserved_tokens, alphabet)
         return cls(subwords.all_subtoken_strings)
