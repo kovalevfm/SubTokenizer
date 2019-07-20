@@ -66,9 +66,9 @@ def test_subtokenizer():
 
     # Split by alphabet
     s = "щиążе сиę рóщниеż з дещалуацйą мациерзыńстща"
-    tokens = st_test.tokenize(s, split_by_alphabets=False)
+    tokens = ReTokenizer.tokenize(s, split_by_alphabets=False)
     assert len(tokens) == 7
-    assert s == st_test.detokenize(tokens)
+    assert s == ReTokenizer.detokenize(tokens)
 
 
 def test_numeric():
