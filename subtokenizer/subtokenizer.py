@@ -28,11 +28,11 @@ class SubTokenizer(object):
         text = text.replace(NOBREAK, '')
         return unescape(text)
 
-    def tokenize(self, text, encode_controls=True, numeric=False, add_eos=False, split_by_alphabets=True):
+    def tokenize(self, text, encode_controls=True, numeric=False, add_eos=False, split_by_alphabets=True, lowercase=False):
         text = normalize_text(text)
         if encode_controls:
             text = self.encode_controls(text)
-        words = ReTokenizer.tokenize(text, split_by_alphabets=split_by_alphabets)
+        words = ReTokenizer.tokenize(text, split_by_alphabets=split_by_alphabets, lowercase=lowercase)
         tokens = []
         for w in words:
             tokens.extend(self.subwords.token_to_subtokens(encode_with_alphabet(w, self.alphabet)))
@@ -42,10 +42,10 @@ class SubTokenizer(object):
             tokens = self.subwords.subtokens_to_ids(tokens)
         return tokens
 
-    def detokenize(self, tokens, decode=True, numeric=False):
+    def detokenize(self, tokens, decode=True, numeric=False, restore_case=False):
         if numeric:
             tokens = self.subwords.ids_to_subtokens(tokens)
-        text = ReTokenizer.detokenize(UntilEOS(tokens))
+        text = ReTokenizer.detokenize(UntilEOS(tokens), restore_case=restore_case)
         if decode:
             text = self.decode(text)
         return text

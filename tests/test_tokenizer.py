@@ -32,8 +32,16 @@ TEXT = ('The store is just across from my house.\r\n'
             'I am going to the shop.\n' + TAGSYMBOL + 'name went to a store.')
 
 def test_tokenizer():
-    s = 'The store is just across from my house. Some rare symbols: ¦~. Email abc@site.com'
+    s = 'The store is just across from my house and McDonalds. Some rare symbols: ¦~. Email abc@site.com, Hi Alex!'
     tokens = ReTokenizer.tokenize(s)
+    assert s == ReTokenizer.detokenize(tokens)
+    # lowercasing
+    tokens = ReTokenizer.tokenize(s, lowercase=True)
+    assert s == ReTokenizer.detokenize(tokens, restore_case=True)
+    # Split by alphabet
+    s = "щиążе сиę рóщниеż з дещалуацйą мациерзыńстща"
+    tokens = ReTokenizer.tokenize(s, split_by_alphabets=False)
+    assert len(tokens) == 7
     assert s == ReTokenizer.detokenize(tokens)
 
 
@@ -64,11 +72,16 @@ def test_subtokenizer():
     assert not TAGSYMBOL + 'store' in tokens
     assert s == st_test.detokenize(tokens)
 
-    # Split by alphabet
-    s = "щиążе сиę рóщниеż з дещалуацйą мациерзыńстща"
-    tokens = ReTokenizer.tokenize(s, split_by_alphabets=False)
-    assert len(tokens) == 7
-    assert s == ReTokenizer.detokenize(tokens)
+    # lowercase
+    words_count = defaultdict(int)
+    for l in TEXT.splitlines():
+        res = ReTokenizer.tokenize(l.strip('\n'), lowercase=True)
+        for r in res:
+            words_count[r] += 1
+    s = 'The store is just across from my house and McDonalds. Some rare symbols: ¦~. Email abc@site.com, Hi Alex!'
+    st_test = SubTokenizer.learn(words_count, min_symbol_count=2, size=70, reserved_tokens=[TAGSYMBOL + 'name'])
+    tokens = st_test.tokenize(s, lowercase=True)
+    assert s == st_test.detokenize(tokens, restore_case=True)
 
 
 def test_numeric():

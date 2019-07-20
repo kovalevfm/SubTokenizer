@@ -26,6 +26,7 @@ I picked out a hat at the store.
 She bought a hat at the shop.
 This shop is open from 7 to 7 o'clock.
 I am going to the shop.
+McDonalds Donald HEY ordinary TTx oOo aAA
 John went to a store.
 EOM
 
@@ -47,6 +48,11 @@ echo "$TEXT" | python -m subtokenizer tokenize -s bpe.file -n -e | python -m sub
 echo "$TEXT" | python -m subtokenizer tokenize -p 2 | python -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
 # python3 multyprocessing
 #echo "$TEXT" | python3 -m subtokenizer tokenize -p 2 | python3 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
+
+# lowercasing
+echo "$TEXT" | python -m subtokenizer tokenize -l | python -m subtokenizer detokenize -l | diff - <( echo "$TEXT" )
+echo "$TEXT" | python -m subtokenizer learn -l -o bpe_l.file -s 70 -m 2
+echo "$TEXT" | python -m subtokenizer tokenize -l -s bpe_l.file | python -m subtokenizer detokenize -l -s bpe.file | diff - <( echo "$TEXT" )
 
 # test windows end of lines
 echo "$ENDOFLINES" | python -m subtokenizer learn -o eof.file -s 70 -m 2

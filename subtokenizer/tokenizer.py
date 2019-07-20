@@ -3,7 +3,7 @@ from __future__ import unicode_literals, absolute_import
 
 import regex
 from six import iteritems
-from subtokenizer.utils import NOSPACE, ENCODED, SPACESYMBOL, NOBREAK, TAGSYMBOL
+from subtokenizer.utils import NOSPACE, ENCODED, SPACESYMBOL, NOBREAK, TAGSYMBOL, ONEUPPER, ALLUPPER
 
 
 
@@ -22,7 +22,21 @@ class ReTokenizer(object):
     TOKENIZER_RE = regex.compile(r'(?V1p)' + '|'.join((WORD, ENCODED, TAG)))
     TOKENIZER_NO_ALPH_SPLIT = regex.compile(r'(?V1p)' + '|'.join((WORD_NO_ALPH_SPLIT, ENCODED, TAG)))
     REMOVE_SPACE_RE = regex.compile(r'(?V1p) ' + NOBREAK + '?' + NOSPACE)
+    LOWER_RE = regex.compile(r'(?V1p)(?P<CAPITAL>\p{Lu}+[\p{L}--\p{Lu}])|(?P<UPPER>\p{Lu}+)')
+    UPPER_RE = regex.compile(r'(?V1p)({0}\p{{L}})|({1}\p{{L}}+(?!p{{L}}))'.format(ONEUPPER, ALLUPPER))
 
+    @staticmethod
+    def _do_lower(t):
+        val = t.group(0)
+        if t.groupdict()['UPPER']:
+            return ''.join((ONEUPPER if len(val) == 1 else ALLUPPER, val.lower()))
+        if len(val) > 2:
+            return ''.join((ALLUPPER, val[:-2].lower(), ONEUPPER, val[-2:].lower()))
+        return ''.join((ONEUPPER, val.lower()))
+
+    @staticmethod
+    def _do_upper(t):
+        return t.group(0)[1:].upper()
 
     @classmethod
     def _add_punctuation(cls, words, punctuation):
@@ -36,9 +50,11 @@ class ReTokenizer(object):
         return words
     
     @classmethod
-    def tokenize(cls, text, split_by_alphabets=True):
+    def tokenize(cls, text, split_by_alphabets=True, lowercase=False):
         words = []
         position = 0
+        if lowercase:
+            text = cls.LOWER_RE.sub(cls._do_lower, text)
         text = text.replace(' ', SPACESYMBOL)
         w_iter = cls.TOKENIZER_RE.finditer(text) if split_by_alphabets else cls.TOKENIZER_NO_ALPH_SPLIT.finditer(text)
         for w_it in w_iter:
@@ -64,8 +80,10 @@ class ReTokenizer(object):
 
 
     @classmethod
-    def detokenize(cls, words):
+    def detokenize(cls, words, restore_case=False):
         text = cls.REMOVE_SPACE_RE.sub('', ''.join(words).replace(SPACESYMBOL, ' '))
+        if (restore_case):
+            text = cls.UPPER_RE.sub(cls._do_upper, text)
         return text
 
 
