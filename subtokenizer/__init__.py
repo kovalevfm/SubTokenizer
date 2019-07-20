@@ -29,7 +29,7 @@ def learn(args):
         line = normalize_text(line.strip('\r\n'))
         if not args.no_encode_controls:
             line = encode_controls(line)
-        return ReTokenizer.tokenize(line, split_by_alphabets=!args.no_split_by_alphabets)
+        return ReTokenizer.tokenize(line, split_by_alphabets=not args.no_split_by_alphabets)
 
     if args.processes == 1:
         for l in sys.stdin:
@@ -52,13 +52,13 @@ def tokenize(args):
         line = normalize_text(l.strip('\r\n'))
         if subtok:
             enc_ctrl = not args.no_encode_controls
-            tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos, split_by_alphabets=!args.no_split_by_alphabets)
+            tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos, split_by_alphabets=not args.no_split_by_alphabets)
             if args.numeric:
                 tokens = map(str, tokens)
             return tokens
         if not args.no_encode_controls:
             line = encode_controls(line)
-        tokens = ReTokenizer.tokenize(line, split_by_alphabets=!args.no_split_by_alphabets)
+        tokens = ReTokenizer.tokenize(line, split_by_alphabets=not args.no_split_by_alphabets)
         if args.add_eos:
             tokens.append(EOS)
         return tokens
