@@ -15,9 +15,12 @@ class ReTokenizer(object):
                  "Mongolian","Myanmar","Ogham","Oriya","Runic","Sinhala","Syriac","Tagalog",
                  "Tagbanwa","TaiLe","Tamil","Thaana","Thai","Tibetan","Yi","N"]
     WORD = '(?P<WORD>' + '|'.join(r'{0}?[\p{{{1}}}][\p{{{1}}}\p{{M}}]*{2}?'.format(NOBREAK, lang, SPACESYMBOL) for lang in LANGUAGES) + ')'
+    ALL_ALPH = ''.join(r'\p{{{0}}}'.format(lang) for lang in LANGUAGES)
+    WORD_NO_ALPH_SPLIT = r'(?P<WORD>{0}?[{1}][{1}\p{{M}}]*{2}?)'.format(NOBREAK,ALL_ALPH,  SPACESYMBOL)
     ENCODED = '(?P<ENCODED>&#[0-9]+;)'
     TAG = '(?P<TAG>'+TAGSYMBOL+'[a-zA-Z0-9_]+'+SPACESYMBOL+'?)'
     TOKENIZER_RE = regex.compile(r'(?V1p)' + '|'.join((WORD, ENCODED, TAG)))
+    TOKENIZER_NO_ALPH_SPLIT = regex.compile(r'(?V1p)' + '|'.join((WORD_NO_ALPH_SPLIT, ENCODED, TAG)))
     REMOVE_SPACE_RE = regex.compile(r'(?V1p) ' + NOBREAK + '?' + NOSPACE)
 
 
@@ -33,11 +36,12 @@ class ReTokenizer(object):
         return words
     
     @classmethod
-    def tokenize(cls, text):
+    def tokenize(cls, text, split_by_alphabets=True):
         words = []
         position = 0
         text = text.replace(' ', SPACESYMBOL)
-        for w_it in cls.TOKENIZER_RE.finditer(text):
+        w_iter = cls.TOKENIZER_RE.finditer(text) if split_by_alphabets else cls.TOKENIZER_NO_ALPH_SPLIT.finditer(text)
+        for w_it in w_iter:
             token_type = next(k for k, v in iteritems(w_it.groupdict()) if v is not None)
             if token_type == 'ENCODED':
                 continue

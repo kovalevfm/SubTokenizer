@@ -64,6 +64,12 @@ def test_subtokenizer():
     assert not TAGSYMBOL + 'store' in tokens
     assert s == st_test.detokenize(tokens)
 
+    # Split by alphabet
+    s = "щиążе сиę рóщниеż з дещалуацйą мациерзыńстща"
+    tokens = st_test.tokenize(s, split_by_alphabets=False)
+    assert len(tokens) == 7
+    assert s == st_test.detokenize(tokens)
+
 
 def test_numeric():
     words_count = defaultdict(int)

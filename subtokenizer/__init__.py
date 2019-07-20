@@ -29,7 +29,7 @@ def learn(args):
         line = normalize_text(line.strip('\r\n'))
         if not args.no_encode_controls:
             line = encode_controls(line)
-        return ReTokenizer.tokenize(line)
+        return ReTokenizer.tokenize(line, split_by_alphabets=!args.no_split_by_alphabets)
 
     if args.processes == 1:
         for l in sys.stdin:
@@ -52,13 +52,13 @@ def tokenize(args):
         line = normalize_text(l.strip('\r\n'))
         if subtok:
             enc_ctrl = not args.no_encode_controls
-            tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos)
+            tokens = subtok.tokenize(line, encode_controls=enc_ctrl, numeric=args.numeric, add_eos=args.add_eos, split_by_alphabets=!args.no_split_by_alphabets)
             if args.numeric:
                 tokens = map(str, tokens)
             return tokens
         if not args.no_encode_controls:
             line = encode_controls(line)
-        tokens = ReTokenizer.tokenize(line)
+        tokens = ReTokenizer.tokenize(line, split_by_alphabets=!args.no_split_by_alphabets)
         if args.add_eos:
             tokens.append(EOS)
         return tokens
@@ -129,12 +129,14 @@ def get_parser():
     parser_learn.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes")
     parser_learn.add_argument('-m', '--min_symbol_count', default=1,  type=int, help="minimal character count to be in alphabet")
     parser_learn.add_argument('-c', '--no_encode_controls', action='store_true', help="do not encode control symbols")
+    parser_learn.add_argument('-a', '--no_split_by_alphabets', action='store_true', help="do not split differnt alphabets")
     parser_tokenize = subparsers.add_parser('tokenize', help='tokenize text')
     parser_tokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_tokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
     parser_tokenize.add_argument('-p', '--processes', default=1,  type=int, help="number of tokenizer processes") 
     parser_tokenize.add_argument('-e', '--add_eos', action='store_true', help="add end of line")
     parser_tokenize.add_argument('-c', '--no_encode_controls', action='store_true', help="do not encode control symbols")
+    parser_tokenize.add_argument('-a', '--no_split_by_alphabets', action='store_true', help="do not split differnt alphabets")
     parser_detokenize = subparsers.add_parser('detokenize', help='restore tokenized text')
     parser_detokenize.add_argument('-s', '--subwords',  default=None, type=str, help="subwords dictionary")
     parser_detokenize.add_argument('-n', '--numeric',  action='store_true', help="numeric output")
