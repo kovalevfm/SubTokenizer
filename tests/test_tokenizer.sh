@@ -50,9 +50,13 @@ echo "$TEXT" | python -m subtokenizer tokenize -p 2 | python -m subtokenizer det
 #echo "$TEXT" | python3 -m subtokenizer tokenize -p 2 | python3 -m subtokenizer detokenize -p 2 | diff - <( echo "$TEXT" )
 
 # lowercasing
-echo "$TEXT" | python -m subtokenizer tokenize -l | python -m subtokenizer detokenize -l | diff - <( echo "$TEXT" )
-echo "$TEXT" | python -m subtokenizer learn -l -o bpe_l.file -s 70 -m 2
-echo "$TEXT" | python -m subtokenizer tokenize -l -s bpe_l.file | python -m subtokenizer detokenize -l -s bpe.file | diff - <( echo "$TEXT" )
+echo "$TEXT" | python -m subtokenizer tokenize --lowercase | python -m subtokenizer detokenize --lowercase | diff - <( echo "$TEXT" )
+echo "$TEXT" | python -m subtokenizer learn --lowercase -o bpe_l.file -s 70 -m 2
+echo "$TEXT" | python -m subtokenizer tokenize --lowercase -s bpe_l.file | python -m subtokenizer detokenize --lowercase -s bpe_l.file | diff - <( echo "$TEXT" )
+
+# reversed bpe
+echo "$TEXT" | python -m subtokenizer learn --reversed_bpe -o bpe_r.file -s 70 -m 2
+echo "$TEXT" | python -m subtokenizer tokenize --reversed_bpe -s bpe_r.file | python -m subtokenizer detokenize --reversed_bpe -s bpe_r.file | diff - <( echo "$TEXT" )
 
 # test windows end of lines
 echo "$ENDOFLINES" | python -m subtokenizer learn -o eof.file -s 70 -m 2

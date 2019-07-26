@@ -6,7 +6,7 @@ from collections import defaultdict
 from subtokenizer.subtokenizer import SubTokenizer
 from subtokenizer.subwords import PAD_ID
 from subtokenizer.tokenizer import ReTokenizer
-from subtokenizer.utils import TAGSYMBOL
+from subtokenizer.utils import TAGSYMBOL, SPACESYMBOL
 
 TEXT = ('The store is just across from my house.\r\n'
             'The store is close to my house.\n'
@@ -83,6 +83,28 @@ def test_subtokenizer():
     tokens = st_test.tokenize(s, lowercase=True)
     assert s == st_test.detokenize(tokens, restore_case=True)
 
+
+def test_reversed_subtokenizer():
+    words_count = defaultdict(int)
+    for l in TEXT.splitlines():
+        res = ReTokenizer.tokenize(l.strip('\n'))
+        for r in res:
+            words_count[r] += 1
+
+    special_token = TAGSYMBOL + 'name' + SPACESYMBOL
+    st_test = SubTokenizer.learn(words_count, min_symbol_count=2, size=70, reserved_tokens=[special_token], reversed_bpe=True)
+    assert special_token[::-1] in st_test.subwords.subtoken_string_to_id
+
+    # Detokenization
+    s = 'Some rare symbols: ¦~. Email house@store.com'
+    tokens = st_test.tokenize(s)
+    assert not TAGSYMBOL + 'store' in tokens
+    assert s == st_test.detokenize(tokens)
+
+    # Tags
+    s = TAGSYMBOL + 'name is just across from store.'
+    tokens = st_test.tokenize(s, encode_controls=False)
+    assert special_token in tokens
 
 def test_numeric():
     words_count = defaultdict(int)

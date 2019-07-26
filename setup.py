@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='subtokenizer',
-    version='0.0.18',
+    version='0.0.19',
 
     description='Subwords tokenizer for neural natural language processing',
     long_description=long_description,
